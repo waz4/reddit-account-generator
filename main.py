@@ -16,60 +16,105 @@ from captcha import solveRecaptcha
 # this option is needed so that the browser dosent close after the script is finished, usefull for debugging
 chrome_options = Options()
 chrome_options.add_experimental_option("detach", True)
+# chrome_options.add_argument('--headless')
 
-driver = webdriver.Chrome(options=chrome_options)
-driver.implicitly_wait(30)
-wait = WebDriverWait(driver,10)
+def generateAccount():
+    status = 0 #Account generated status
+    error = "" #Account generatiion Error
 
-registerUrl = "https://www.reddit.com/register/"
-driver.get(registerUrl)
+    driver = webdriver.Chrome(options=chrome_options)
+    driver.implicitly_wait(30)
+    wait = WebDriverWait(driver,10)
 
-# generate credential
-tempMail = ""
-username = randomUsername()
-password = randomPassword(8)
+    registerUrl = "https://www.reddit.com/register/"
+    driver.get(registerUrl)
 
-#fill in email field 
-emailField = driver.find_element(By.ID, "regEmail")
-emailField.send_keys(tempMail)
+    # generate credential
+    mail = ""
+    username = randomUsername()
+    password = randomPassword(8)
 
-continueButton = driver.find_element(By.XPATH, "/html/body/div/main/div[1]/div/div[2]/form/fieldset[3]/button")
-continueButton.click()
+    #fill in email field 
+    emailField = driver.find_element(By.ID, "regEmail")
+    emailField.send_keys(mail)
 
-# fill in username and password fields
-usernameField = driver.find_element(By.ID, "regUsername")
-passwordField = driver.find_element(By.ID, "regPassword")
-usernameField.send_keys(username)
-passwordField.send_keys(password)
+    continueButton = driver.find_element(By.XPATH, "/html/body/div/main/div[1]/div/div[2]/form/fieldset[3]/button")
+    continueButton.click()
 
-# solve captcha
-sitekey = "6LeTnxkTAAAAAN9QEuDZRpn90WwKk_R1TRW_g-JC"
-result = solveRecaptcha(sitekey, registerUrl)
-code = result["code"]
-# code = "success"
+    # fill in username and password fields
+    usernameField = driver.find_element(By.ID, "regUsername")
+    passwordField = driver.find_element(By.ID, "regPassword")
+    usernameField.send_keys(username)
+    passwordField.send_keys(password)
 
-try:
-    wait.until(EC.presence_of_element_located((By.ID, "g-recaptcha-response")))
-except TimeoutError as e:
-    print(e)
-    print("g-recaptcha-response not found")
-else:
-    driver.execute_script(
-        "document.getElementById('g-recaptcha-response').innerHTML = '{}'".format(code)
-    )
+    # solve captcha
+    sitekey = "6LeTnxkTAAAAAN9QEuDZRpn90WwKk_R1TRW_g-JC"
+    captchaResult = solveRecaptcha(sitekey, registerUrl)
+    code = captchaResult["code"]
+    # code = "success"
 
-# press sign up button
-signupButton = driver.find_element(By.XPATH, "/html/body/div[1]/main/div[2]/div/div/div[3]/button")
-signupButton.click()
+    try:
+        wait.until(EC.presence_of_element_located((By.ID, "g-recaptcha-response")))
+    except TimeoutError as e:
+        print("g-recaptcha-response not found")
+        raise e
+    else:
+        driver.execute_script(
+            "document.getElementById('g-recaptcha-response').innerHTML = '{}'".format(code)
+        )
 
-try:
-    wait.until(EC.url_changes(registerUrl))
-except TimeoutException as e:
-    print("Fail")
-    print(driver.find_element(By.XPATH, "/html/body/div[1]/main/div[2]/div/div/div[3]/span/span[2]").text)
-else:
-    print("Success")
-    print(username)
-    print(password)
-    with open('accounts.txt', 'a') as f:
-        f.write("{} {}".format(username, password), "\n")
+    # press sign up button
+    signupButton = driver.find_element(By.XPATH, "/html/body/div[1]/main/div[2]/div/div/div[3]/button")
+    signupButton.click()
+
+    try:
+        wait.until(EC.url_changes(registerUrl))
+    except TimeoutException as e:
+        error = driver.find_element(By.XPATH, "/html/body/div[1]/main/div[2]/div/div/div[3]/span/span[2]").text
+
+    else:
+        status = 1
+
+    return (status, email, username, password, error) 
+
+def log(outputFile: str, status: int, email: str, username: str, password: str, error: str):
+    TimeStamp = "TimeStamp" #TODO: substituir timeStamp hardcoded por um asseroi
+    logLine = f"{TimeStamp}|{email}|{username}|{password}"
+
+    if email == "":
+        email = "NOEMAIL"
+
+    if(status != 1):
+        outputFile = f"errors{outputFile}"
+        logLine += f"|{error}"
+    
+    isCreated = True #TODO: check if file exists if it doesn't create it and write an header
+    if(not isCreated):
+        writeHeader(TimeStamp)
+
+    with open(f"output/{outputFile}", 'a') as f:
+        f.write(logLine + "\n")
+
+def writeHeader(Timestamp):
+    header = f"----- HEADER START -----\nAccounts created on {Timestamp}\nData is structured in the following format:\nTimeStamp|Email|Username|Password\n----- HEADER CLOSE -----"
+    with open(f"output/{outputFile}", 'w') as f:
+        f.write(header + "\n")
+
+#generate Accounts every X amount of seconds
+def main(generationInterval: int, outputFile: str):
+    successFullAccountsCounter = 0
+    failedAccountsCounter = 0
+    while(True):
+        print("Generating New Account")
+        status, email, username, password, error = generateAccount()
+        log(outputFile, status, email, username, password, error) 
+
+        if(status == 1):
+            print("Success")
+            successFullAccountsCounter += 1
+        else: 
+            print("Failed")
+            print(error)
+            failedAccountsCounter += 1
+
+        sleep(605) #wait 10 minutes and 5 seconds until next iteration

@@ -14,7 +14,7 @@ def randomUsername():
 
 # type 0 - no punctuation
 # type !0 - with punctuation
-def randomPassword(passwordLenght: int, type:int = 0):
+def randomPassword(passwordLenght: int = 10, type:int = 0):
     
     chars = ascii_letters + digits
     if (type != 0):
