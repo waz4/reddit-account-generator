@@ -2,6 +2,7 @@ from random import choice, randint
 from string import ascii_letters, digits, punctuation
 
 def randomUsername():
+    # max lenght is 20 chars
     names = open('resources/names.txt').read().splitlines() # creates a list of names with one line per item
     adjectives = open("resources/adjectives.txt").read().splitlines() # creates a list of adjectives with one line per item
 
@@ -10,7 +11,7 @@ def randomUsername():
     randomNumber = randint(0, 10)
 
     randomUsername = randomAdjective + randomName + str(randomNumber)
-    return randomUsername
+    return randomUsername[:20]
 
 # type 0 - no punctuation
 # type !0 - with punctuation

@@ -1,6 +1,8 @@
 # Reddit account generator
 # notes:
 #   - 1 account every 10mn per IP
+from os.path import exists
+import datetime
 from time import sleep
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -30,13 +32,13 @@ def generateAccount():
     driver.get(registerUrl)
 
     # generate credential
-    mail = ""
+    email = ""
     username = randomUsername()
     password = randomPassword(8)
 
     #fill in email field 
     emailField = driver.find_element(By.ID, "regEmail")
-    emailField.send_keys(mail)
+    emailField.send_keys(email)
 
     continueButton = driver.find_element(By.XPATH, "/html/body/div/main/div[1]/div/div[2]/form/fieldset[3]/button")
     continueButton.click()
@@ -78,7 +80,7 @@ def generateAccount():
     return (status, email, username, password, error) 
 
 def log(outputFile: str, status: int, email: str, username: str, password: str, error: str):
-    TimeStamp = "TimeStamp" #TODO: substituir timeStamp hardcoded por um asseroi
+    TimeStamp = "{:%Y-%b-%d %H:%M:%S}".format(datetime.datetime.now())
     logLine = f"{TimeStamp}|{email}|{username}|{password}"
 
     if email == "":
@@ -88,33 +90,37 @@ def log(outputFile: str, status: int, email: str, username: str, password: str, 
         outputFile = f"errors{outputFile}"
         logLine += f"|{error}"
     
-    isCreated = True #TODO: check if file exists if it doesn't create it and write an header
-    if(not isCreated):
-        writeHeader(TimeStamp)
+    if(not exists(f"output/{outputFile}")):
+        writeHeader(outputFile, TimeStamp)
 
     with open(f"output/{outputFile}", 'a') as f:
         f.write(logLine + "\n")
 
-def writeHeader(Timestamp):
+def writeHeader(outputFile, Timestamp):
     header = f"----- HEADER START -----\nAccounts created on {Timestamp}\nData is structured in the following format:\nTimeStamp|Email|Username|Password\n----- HEADER CLOSE -----"
     with open(f"output/{outputFile}", 'w') as f:
         f.write(header + "\n")
 
 #generate Accounts every X amount of seconds
-def main(generationInterval: int, outputFile: str):
+def main(outputFile: str, generationInterval: int = 605):
     successFullAccountsCounter = 0
     failedAccountsCounter = 0
-    while(True):
-        print("Generating New Account")
-        status, email, username, password, error = generateAccount()
-        log(outputFile, status, email, username, password, error) 
+    try:
+        while(True):
+            print("Generating New Account")
+            status, email, username, password, error = generateAccount()
+            # status, email, username, password, error = (1, "darren@gmail.com", "darren", "password", "")
+            log(outputFile, status, email, username, password, error) 
 
-        if(status == 1):
-            print("Success")
-            successFullAccountsCounter += 1
-        else: 
-            print("Failed")
-            print(error)
-            failedAccountsCounter += 1
+            if(status == 1):
+                print("Success")
+                successFullAccountsCounter += 1
+            else: 
+                print("Failed")
+                print(error)
+                failedAccountsCounter += 1
 
-        sleep(605) #wait 10 minutes and 5 seconds until next iteration
+            sleep(generationInterval) #wait 10 minutes and 5 seconds until next iteration
+    except KeyboardInterrupt:
+        print("Finished")
+main("account.txt")
