@@ -18,5 +18,4 @@ if ! [[ "$1" =~ ^(http|https|socks4|socks5)$ ]]; then
 fi
 
 coresh=$(dirname -- "$(readlink -f -- "$BASH_SOURCE")")"/utils/core.sh"
-rm proxy.lst
-$coresh $@ | grep -E -o "([0-9]{1,3}[\.]){3}[0-9]{1,3}\:[0-9]{1,5}" | sort -u > proxy.lst
+$coresh $@ | grep -E -o "([0-9]{1,3}[\.]){3}[0-9]{1,3}\:[0-9]{1,5}" | sort -u 

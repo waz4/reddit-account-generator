@@ -3,6 +3,7 @@
 import requests, json, concurrent.futures, time, subprocess
 from math import floor
 from datetime import datetime
+import os
 
 # number of cpu virtual processors
 NUMBER_OF_THREADS = 16
@@ -24,16 +25,19 @@ def testProxy(proxy):
 
 # Check if the proxy list is older than 2 hours if it is then get a new proxy list
 def checkForNewProxies():
-    with open("proxine/proxy.lst", "r") as f:
-        lastUpdate = float(f.readline())
+    lastUpdate = 0
+    if (os.path.exists("proxy.lst")):
+        with open("proxy.lst", "r") as f:
+            lastUpdate = float(f.readline())
     timeSinceLastUpdate = time.time() - lastUpdate
 
     print(f"Time since last proxy update: {floor(timeSinceLastUpdate)}s")
     if timeSinceLastUpdate > 3600:
         print("Updating proxy list...")
-        p = subprocess.Popen(["bash", "proxine.sh", "https"], cwd="proxine/")
+
+        p = subprocess.Popen("bash proxine.sh https > ../proxy.lst", shell=True, cwd="./proxine/")
         p.wait()
-        with open("proxine/proxy.lst", "r+") as f:
+        with open("proxy.lst", "r+") as f:
             content = f.read()
             f.seek(0, 0)
             f.write(str(time.time()).rstrip('\r\n') + '\n' + content)
@@ -55,7 +59,7 @@ def getWorkingProxyList():
     else:
         numberOfWorkers = NUMBER_OF_THREADS + 4
 
-        with open("proxine/proxy.lst", 'r') as f:
+        with open("proxy.lst", 'r') as f:
             proxies = f.read().splitlines()
             proxies.pop(0)
         
@@ -75,3 +79,5 @@ def getWorkingProxyList():
 
     print(f"Number of working proxies: {len(proxyList)}")
     return proxyList
+
+checkForNewProxies()
