@@ -79,5 +79,3 @@ def getWorkingProxyList():
 
     print(f"Number of working proxies: {len(proxyList)}")
     return proxyList
-
-checkForNewProxies()
