@@ -3,14 +3,14 @@
 import requests, json, concurrent.futures, time, subprocess
 from math import floor
 from datetime import datetime
-import os
+import os, string
 
 # number of cpu virtual processors
 NUMBER_OF_THREADS = 16
 # url in which proxies will be tested on
 TARGET_URL = "https://reddit.com"
 
-# test proxy against TARGET_URL, if its successfull then add proxy to proxy pool
+# test proxy against TARGET_URL, if its successfull then add proxy to working proxy list
 def testProxy(proxy):
     try:
         r = requests.get(TARGET_URL, proxies = {"http": proxy, "https": proxy}, timeout=2)
@@ -28,7 +28,9 @@ def checkForNewProxies():
     lastUpdate = 0
     if (os.path.exists("proxy.lst")):
         with open("proxy.lst", "r") as f:
-            lastUpdate = float(f.readline())
+            line = f.readline()
+            if line != '':
+                lastUpdate = float(line)
     timeSinceLastUpdate = time.time() - lastUpdate
 
     print(f"Time since last proxy update: {floor(timeSinceLastUpdate)}s")
@@ -48,9 +50,13 @@ def getWorkingProxyList():
     checkForNewProxies()
     
     proxyList = []
+    lastProxyTest = -1
 
-    with open("workingProxies.lst", "r") as f:
-        lastProxyTest = float(f.readline())
+    if(os.path.exists("workingProxies.lst")):
+        with open("workingProxies.lst", "r") as f:
+            line = f.readline()
+            if line != '':
+                lastProxyTest = float(line)
 
     if time.time() - lastProxyTest < 3600:
         proxyList = open("workingProxies.lst", "r").read().splitlines()
