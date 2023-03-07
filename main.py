@@ -126,7 +126,7 @@ def log(outputFile: str, status: int, email: str, username: str, password: str, 
 
 def writeHeader(outputFile, Timestamp):
     header = f"----- HEADER START -----\nAccounts created on {Timestamp}\nData is structured in the following format:\nTimeStamp|Email|Username|Password\n----- HEADER CLOSE -----"
-    with open(f"output/{outputFile}", 'w') as f:
+    with open(f"output/{outputFile}", 'w+') as f:
         f.write(header + "\n")
 
 #generate Accounts every X amount of seconds
@@ -143,7 +143,7 @@ def main():
                 status, email, username, password, error = future.result()
                 if status == 1:
                     print("Account Created Successfully!")
-                log("AsyncTest.txt", status, email, username, password, error)
+                log("accounts.txt", status, email, username, password, error)
         print("Generation round finished \n Going to sleep!")
         sleep(605)
 

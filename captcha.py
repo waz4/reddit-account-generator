@@ -5,7 +5,7 @@ from twocaptcha import TwoCaptcha
 def solveRecaptcha(sitekey, url):
     sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
-    api_key = os.getenv('APIKEY_2CAPTCHA', '3dddc279b7daa50f3f1437c09bac96e8')
+    api_key = os.getenv('APIKEY_2CAPTCHA', '2b75efcbe6855b6b1ec22f205eafa0d8')
 
     solver = TwoCaptcha(api_key)
     result = "test"
